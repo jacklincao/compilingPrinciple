@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>编译原理</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <header>编译原理演示系统</header>
+    <div class="body">
+        <div class="nav">
+            <ul class="toolsNav">
+                <li class="sub1">
+                    <span>文件</span>
+                    <ul class="sub2">
+                        <li class="sub2-item"><span>打开</span></li>
+                        <li class="sub2-item"><span>保存</span></li>
+                        <li class="sub2-item"><span>另存为</span></li>
+                        <li class="sub2-item"><span>退出</span></li>
+                    </ul>
+                </li>
+                <li class="sub1">
+                    <span>词法分析</span>
+                    <ul class="sub2">
+                        <li class="sub2-item"><span>手工生成过程演示M</span></li>
+                        <li class="sub2-item"><span>自动生成算法演示A</span></li>
+                    </ul>
+                </li>
+                <li class="sub1"><span>语法分析</span></li>
+                <li class="sub1"><span>中间代码生成</span></li>
+                <li class="sub1"><span>目标代码生成</span></li>
+                <li class="sub1"><span>帮助</span></li>
+                <li style="clear: both;"></li>
+            </ul>
+        </div>
+        <div class="box">
+            <div class="box-item">
+                <textarea placeholder="代码展示区" id="display"></textarea>
+            </div>
+            <div class="box-item">
+                <textarea placeholder="token" id="token"></textarea>
+            </div>
+            <div class="box-item">
+                <textarea placeholder="错误" id="error"></textarea>
+            </div>
+            <div class="box-item">
+                <textarea placeholder="标识符" id="symbol"></textarea>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
