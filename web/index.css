@@ -49,11 +49,16 @@ header {
     margin: 6px;
 }
 
-.box {
+.container {
     display: flex;
     flex-wrap: wrap;
     align-content: space-between;
     justify-content: space-between;
+}
+
+.box {
+    width: 100%;
+    display: flex;
 }
 
 .box-item {
@@ -67,5 +72,5 @@ textarea {
     height: 100%;
     width: 100%;
     font: italic bold 12px/20px arial,sans-serif;
-    font-size: 1em;
+    font-size: 13px;
 }
