@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <header>编译原理演示系统</header>
+    <!--<header>编译原理演示系统</header>-->
     <div class="body">
         <div class="nav">
             <ul class="toolsNav">
@@ -15,7 +15,7 @@
                     <ul class="sub2">
                         <li class="sub2-item" onclick="openFile()"><span><input id="openFile" onchange="getFile(this.files)" type="file" style="display: none;">打开</span></li>
                         <li class="sub2-item"><span>保存</span></li>
-                        <li class="sub2-item"><span>另存为</span></li>
+                        <li class="sub2-item" onclick="saveAnother()"><span>另存为</span></li>
                         <li class="sub2-item"><span>退出</span></li>
                     </ul>
                 </li>

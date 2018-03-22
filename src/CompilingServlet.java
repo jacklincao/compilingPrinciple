@@ -7,7 +7,30 @@ import java.io.*;
 import java.util.Collection;
 
 public class CompilingServlet extends HttpServlet {
-    public String baseFilePath = "E:\\我的学习代码\\前端学习代码\\我的github项目";
+    /**
+     * 常数
+     */
+    private final Integer CONSTANT = 1;
+    /**
+     * 标识符
+     */
+    private final Integer IDENTIFIER = 2;
+    /**
+     * 注释
+     */
+    private final Integer NOTE = 3;
+    /**
+     * 字符常数
+     */
+    private final Integer CHAR = 4;
+    /**
+     * 界符
+     */
+    private final Integer DELIMITER = 5;
+    /**
+     * 未知字符
+     */
+    private final Integer UNKNOW = 6;
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         this.doGet(request, response);
@@ -24,13 +47,73 @@ public class CompilingServlet extends HttpServlet {
                 out.append(new String(b, 0, n, "utf-8"));
             }
             String content = out.toString();
-            System.out.println(content);
+
+            BufferedReader reader = new BufferedReader(new StringReader(content));
+            String line = "";
+            int row = 1;
+            while ((line = reader.readLine()) != null) {
+                System.out.println(row++ + "行:" + line);
+            }
+
         } catch(IOException e) {
             e.printStackTrace();
         }
     }
 
-    private String getFilename(Part part) {
+    /**
+     * 对参数进行分类
+     * @param ch
+     * @return
+     */
+    public int sort(char ch) {
+        if(isdigit(ch)) {
+            return CONSTANT;
+        }
+        else if(isalpha(ch)) {
+            return IDENTIFIER;
+        }
+        else if(ch=='/') {
+            return NOTE;
+        }
+        else if(ch=='\\') {
+            return CHAR;
+        }
+        else if(isdelimeter(ch)) {
+            return DELIMITER;
+        }
+        else {
+            return UNKNOW;
+        }
+    }
+
+    /**
+     * 界符判断
+     * @param ch
+     * @return
+     */
+    private boolean isdelimeter(char ch) {
+        return false;
+    }
+
+    /**
+     * 是否是标识符
+     * @param ch
+     * @return
+     */
+    private boolean isalpha(char ch) {
+        return false;
+    }
+
+    /**
+     * 常数判断：第一个字符是否是数字
+     * @param ch
+     * @return
+     */
+    private boolean isdigit(char ch) {
+        return false;
+    }
+
+    public String getFilename(Part part) {
         if (part == null) {
             return null;
         }

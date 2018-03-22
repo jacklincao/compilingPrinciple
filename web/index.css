@@ -1,6 +1,6 @@
 body {
     background-color: #e1e1e1;
-    height: 100vh;
+    height: 97vh;
     margin: 0px 8px;
 }
 
@@ -8,11 +8,11 @@ ul {
     padding-left: 0px;
 }
 
-header {
-    text-align: center;
-    font-style: italic;
-    font-weight: bold;
-}
+/*header {*/
+    /*text-align: center;*/
+    /*font-style: italic;*/
+    /*font-weight: bold;*/
+/*}*/
 
 .toolsNav {
     margin-bottom: 5px;
