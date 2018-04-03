@@ -1,0 +1,37 @@
+{
+  "type": "delimeter",
+  "wordList": [
+    {
+      "word": ";",
+      "token": "101"
+    },
+    {
+      "word": ",",
+      "token": "102"
+    },
+    {
+      "word": "{",
+      "token": "103"
+    },
+    {
+      "word": "}",
+      "token": "104"
+    },
+    {
+      "word": "(",
+      "token": "105"
+    },
+    {
+      "word": ")",
+      "token": "106"
+    },
+    {
+      "word": "[",
+      "token": "107"
+    },
+    {
+      "word": "]",
+      "token": "108"
+    }
+]
+}
