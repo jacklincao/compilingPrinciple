@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>编译原理</title>
     <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="./highlight/styles/androidstudio.css">
+    <script src="./highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
 </head>
 <body>
     <!--<header>编译原理演示系统</header>-->
@@ -35,19 +38,45 @@
         </div>
         <div class="container">
             <div class="box">
-                <div class="box-item">
-                    <textarea placeholder="代码展示区" id="display"></textarea>
+                <div class="box-item" style="overflow-y:auto;">
+                    <div class="sub-title">代码区域</div>
+                    <!--<textarea placeholder="代码展示区" id="display"></textarea>-->
+                    <pre class="top-sub-title" id="preCode" style="visibility: hidden;"><code id="display" class="java"></code></pre>
                 </div>
-                <div class="box-item">
-                    <textarea placeholder="token" id="token"></textarea>
+                <div class="box-item token" id="token">
+                    <div class="sub-title" id="subTitleParent" style="background-color: white;">
+                        <span style="    background-color: lightblue;">
+                            TOKEN表
+                        </span>
+                    </div>
+                    <div id="subTitle" style="position: fixed;    margin-top: 27px;background-color: lightgray;display: flex;">
+                        <span style="display: inline-block; width: 200px;">单词</span>
+                        <span style="margin-left: 20px;">种别码</span>
+                    </div>
                 </div>
             </div>
             <div class="box">
-                <div class="box-item">
-                    <textarea placeholder="错误" id="error"></textarea>
+                <div class="box-item" id="error" style="overflow-y: auto;">
+                    <div class="sub-title" id="errorParent" style="background-color: white;">
+                        <span style="    background-color: lightblue;">
+                            Error表
+                        </span>
+                    </div>
+                    <!--<textarea placeholder="错误" </textarea>-->
                 </div>
-                <div class="box-item">
-                    <textarea placeholder="标识符" id="symbol"></textarea>
+                <div class="box-item" id="symbol" style="overflow-y: auto;">
+                    <div class="sub-title" id="symbolParent" style="background-color: white;">
+                        <span style="    background-color: lightblue;">
+                            Symbol表
+                        </span>
+                    </div>
+                    <div id="symbolSubTitle" style="position: fixed;    margin-top: 27px;background-color: lightgray;display: flex;">
+                        <span>所在行</span>
+                        <span style="margin-left: 20px;display: inline-block; width: 200px;">单词</span>
+                        <span style="margin-left: 20px;">长度</span>
+                    </div>
+
+                    <!--<textarea placeholder="标识符" id="symbol"></textarea>-->
                 </div>
             </div>
         </div>

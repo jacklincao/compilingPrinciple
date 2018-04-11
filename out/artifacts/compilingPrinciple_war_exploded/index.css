@@ -29,6 +29,7 @@ ul {
 .toolsNav>li:hover>ul {
     display: block;
     border-radius: 4px;
+    z-index: 20;
     width: fit-content;
     position: absolute;
     background-color: white;
@@ -42,6 +43,20 @@ ul {
 
 .sub2 {
     width: 100px;
+}
+
+.sub-title {
+    position: fixed;
+    z-index: 10;
+    color: white;
+    width: fit-content;
+    background: lightblue;
+    font-size: 1.3em;
+    border-bottom-right-radius: 10px;
+}
+
+.top-sub-title{
+    margin-top:27px;
 }
 
 .sub2-item {
@@ -66,6 +81,10 @@ ul {
     width: 49%;
     margin: 1vh 1vh;
     height: 43vh;
+}
+
+.token {
+    overflow: auto;
 }
 
 textarea {
