@@ -37,14 +37,21 @@ public class CompilingServlet extends HttpServlet {
      * 未知字符
      */
     public static final int UNKNOW = 6;
+    /**
+     * 运算符
+     */
+    private static final int CALCULATE = 7;
     private static final int ID_TOKEN = 1212;//标识符token
     private static final int NUMBER_TOKEN = 1213;
-    private static final int ERROR_CODE = 110;//错误
+    private static final int ERROR_CODE = 110110;//错误
     private static final int INT_CODE = 10000;//整数
     private static final int NUMBER_CODE = 10001;//实数
     private static final int COM_TOKEN = 10002;//注释
     private static final int EXCEPT_TOKEN = 60;//除号
     private static final int CHAR_TOKEN = 10004;//字符常数
+    private static int colNo = 0;//当前的读取的列
+    private static String nowLine = "";//当前读取的行
+
     /**
      * 关键字、界符等表
      */
@@ -132,7 +139,6 @@ public class CompilingServlet extends HttpServlet {
 
     /**
      * 扫描
-     *
      * @param content
      * @throws IOException
      */
@@ -142,103 +148,184 @@ public class CompilingServlet extends HttpServlet {
         String line = "";
         while ((line = reader.readLine()) != null) {
             row++;
-            int col = 0;
-            String temp = "";
-            int length = line.toCharArray().length;
+            colNo = 0;
+            int length = line.toCharArray().length;//当前行的长度
 
             if (length > 0) {
-                int sort = sort(line.charAt(col));
-                if (line.charAt(col) != '\t') {
-                    temp += line.charAt(col);
+                nowLine = line;
+                System.out.println(row);
+                if(row == 50) {
+                    System.out.println(1);
                 }
-                //一行未处理完
-                while (col < length - 1) {
-                    char ch = 0;
-                    while (sort != DELIMITER && sort != -1 && col < length - 1) {//如果未到定界符、空格、换行，则继续读入下一字符
-                        col += 1;
-                        ch = line.charAt(col);
-                        sort = sort(ch);
-                        if((temp.equals("/") && ch=='*') || ch=='/'){
-                            String otherLine = line.substring(col);//剩余的字符串
-                            int result = handlecom(otherLine);//识别除号或注释
-                            if(result == EXCEPT_TOKEN) {//除号的种别码
-                                System.out.println("不是/**/注释");
-                            }
-                            else {
-                                col = length - 1;
-                                sort = -1;
-                                temp = "";
-                            }
-                        }
-                        if (' ' == ch || ch == '\t') {//读取的字符是空格或者换行符时,将sort标记为-1
-                            sort = -1;
-                        }
-                        if (sort != DELIMITER && sort != -1) {//标识符
-                            temp += line.charAt(col);
+                while(length > 0 && line.charAt(colNo) == '\t'){
+                    line = line.substring(1);
+                    nowLine = line;
+                    length = line.toCharArray().length;
+                }
+                if(length > 0) {
+                    if (line.charAt(colNo) != '\t') {
+                        while (colNo < length) {
+                                char ch;
+                                ch = line.charAt(colNo++);//第一个字符
+                                int sort = sort(ch);
+                                String hadRead = "" + ch;
+                                //读入第一个字符,进行判断
+                                if(sort == IDENTIFIER) {//进入标识符识别
+                                    String id = recog_id(ch);//获取标识符
+                                    if(!(""+ERROR_CODE).equals(id)) {//返回的不是错误码
+                                        int token = isKeyWord(id);//0:不是关键字,非0:是关键字
+                                        if(token == 0){
+                                            if(!isInSymbolTable(id)) {//不在symbol中
+                                                insertIntoSymbolTable(id, token, row);
+                                            }
+                                        }
+                                        insertIntoTokenTable(id, token);
+                                    }
+                                    else {
+                                        insertIntoErrorTable(id, row);
+                                    }
+                                }
+                                else if(sort == CONSTANT) {//常数
+                                    int preCol = colNo - 1;
+                                    int number = recogdig(ch);
+                                    int finCol = colNo;
+                                    String id;
+                                    if(preCol == finCol) {
+                                        id = "" + ch;
+                                    }
+                                    else {
+                                        id = nowLine.substring(preCol, finCol);
+                                    }
+                                    if(ERROR_CODE!=(number)) {//未出错情况
+                                        if(!isInSymbolTable(""+number)) {
+                                            insertIntoSymbolTable(id, number, row);
+                                        }
+                                        else {
+                                            insertIntoTokenTable(id, number);
+                                        }
+                                    }
+                                    else {
+                                        insertIntoErrorTable(id, number);
+                                    }
+                                }
+                                else if(sort == NOTE) {//注释
+                                    int token = handlecom(ch);
+                                    if(token == EXCEPT_TOKEN) {//等于除号
+                                        insertIntoTokenTable("/", EXCEPT_TOKEN);
+                                    }
+                                    else {//是注释
+                                        colNo = nowLine.length();
+                                    }
+                                }
+                                else if(sort == DELIMITER) {//定界符
+                                    //TODO 识别界符
+                                    String str = recogdel(ch);
+                                    if(!"ERROR".equals(str)) {
+                                        int delimeterToken = getDelimeterToken(str);
+                                        if(delimeterToken != 0) {//是界符
+                                            insertIntoTokenTable(str, delimeterToken);
+                                        }
+                                    }
+                                }
+                                else if(sort == CALCULATE) {//运算符
+                                    //TODO 识别运算符
+                                    String str = recogcal(ch);
+                                    if(!"ERROR".equals(str)) {
+                                        int calculateToken = getCalculateToken(str);
+                                        if(calculateToken!=0) {
+                                            insertIntoTokenTable(str, calculateToken);
+                                        }
+                                    }
+                                }
+                                else if(sort == CHAR) {//字符常数
+                                    int preCol = colNo;
+                                    int token = recogstr(ch);
+                                    int finCol = colNo;
+                                    String id = nowLine.substring(preCol, finCol-1);
+                                    if(!isInSymbolTable(id)) {
+                                        insertIntoSymbolTable(id, token, row);
+                                    }
+                                    else {
+                                        insertIntoTokenTable(id, token);
+                                    }
+                                }
+                                else {//未知的字符
+                                    if(ch != ' ') {
+                                        insertIntoErrorTable(""+ch, row);
+                                    }
+                                }
                         }
                     }
-
-                    if (!"".equals(temp)) {//读取一个标识符完毕
-                        int type = sort(temp.charAt(0));
-                        int result = 0;
-                        int keyWord = isKeyWord(temp);
-                        if (keyWord != 0) {
-                            //关键字
-//                            insertIntoSymbolTable(temp, keyWord, row);
-                            insertIntoTokenTable(temp, keyWord);
-                        } else {
-                            if (type == IDENTIFIER) {
-                                //标识符
-                                result = recog_id(temp);
-                            } else if (type == CONSTANT) {
-                                result = recogdig(temp);
-                            } else if (type == CHAR) {
-                                //字符或字符串
-                                result = recogstr(temp);
-                            }
-                            else if (type == NOTE) {
-                                //单行注释
-                                col = length - 1;
-                                sort = -1;
-                                temp = "";
-//                                result = handlecom(temp);
-                            }
-                            else if (type == UNKNOW){
-                                //未识别出的字符，查找java的相关字符表,
-                                int token = isKeyWord(temp);
-                                if(token!=0) {
-                                    insertIntoTokenTable(temp, token);
-                                }
-                                else {
-                                    result = ERROR_CODE;
-                                }
-                            }
-                            else {
-                                result = ERROR_CODE;
-                            }
-                            insertIntoSymbolTable(temp, result, row);
-                            if (result != ERROR_CODE) {
-                                insertIntoTokenTable(temp, result);
-                            }
-                            else {
-                                insertIntoErrorTable(temp, row);
-                            }
-                        }
-                        System.out.println(temp);
-                        if (sort == DELIMITER) {//读取界符完毕
-                            int delimeterToken = isdelimeter(""+ch);
-                            if(type == IDENTIFIER) {
-                                insertIntoSymbolTable(temp, delimeterToken, row);
-                            }
-                            insertIntoTokenTable(""+ch, delimeterToken);
-                            System.out.println(ch);
-                        }
-                    }
-                    temp = "";
-                    sort = 0;
                 }
             }
         }
+    }
+
+    private int getCalculateToken(String str) {
+        List<WordListBean> wordListBeans = entryMap.get("calculate");
+        for(WordListBean wordListBean : wordListBeans) {
+            if(wordListBean.getWord().equals(str)) {
+                return Integer.parseInt(wordListBean.getToken());//返回界符
+            }
+        }
+        return 0;
+    }
+
+    private int getDelimeterToken(String str) {
+        List<WordListBean> wordListBeans = entryMap.get("delimeter");
+        for(WordListBean wordListBean : wordListBeans) {
+            if(wordListBean.getWord().equals(str)) {
+                return Integer.parseInt(wordListBean.getToken());//返回界符
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * 识别运算符
+     * @param ch
+     */
+    private String recogcal(char ch) {
+        String temp = "" + ch;
+        char newCh = nowLine.charAt(colNo++);
+        temp += newCh;
+
+        List<WordListBean> wordListBeans = entryMap.get("calculate");
+        for(WordListBean wordListBean : wordListBeans) {
+            if(wordListBean.getWord().equals(temp)) {
+                return wordListBean.getWord();//返回界符
+            }
+        }
+        colNo--;
+        temp = "" + ch;
+        for(WordListBean wordListBean : wordListBeans) {
+            if(wordListBean.getWord().equals(temp)) {
+                return wordListBean.getWord();//返回界符
+            }
+        }
+        return "ERROR";
+    }
+
+    /**
+     * 识别界符
+     * @param ch
+     */
+    private String recogdel(char ch) {
+        List<WordListBean> wordListBeans = entryMap.get("delimeter");
+        for(WordListBean wordListBean : wordListBeans) {
+            if(wordListBean.getWord().equals(""+ch)) {
+                return wordListBean.getWord();//返回界符
+            }
+        }
+        String temp = "" + ch;
+        temp +=nowLine.charAt(colNo++);
+        for(WordListBean wordListBean : wordListBeans) {
+            if(wordListBean.getWord().equals(temp)) {
+                return wordListBean.getWord();//返回界符
+            }
+        }
+        colNo--;
+        return "ERROR";
     }
 
     private void insertIntoErrorTable(String temp, int row) {
@@ -266,87 +353,124 @@ public class CompilingServlet extends HttpServlet {
     /**
      * 识别标识符
      *
-     * @param temp
+     * @param ch
+     * 返回标识符
      */
-    private int recog_id(String temp) {
+    private String recog_id(char ch) {
         int state = 0;
-        int colNo = 0;
-        char ch = temp.charAt(colNo);
+        String id = "";
+
         while (state != 2) {
             switch (state) {
-                case 0:
-                    if (isalpha(ch)) state = 1;
-                    else return ERROR_CODE;
+                case 0://0状态，读入一个字母，变成1状态
+                    if (isalpha(ch)) {
+                        id += ch;
+                        state = 1;
+                    }
+                    else {
+                        return "" + ERROR_CODE;
+                    }
                     break;
                 case 1:
-                    if ((isalpha(ch) || isdigit(ch)) && colNo < temp.length()-1) state = 1;
-                    else state = 2;
+                    if ((isalpha(ch) || isdigit(ch))) {
+                        id += ch;
+                        state = 1;
+                    }
+                    else {
+                        state = 2;
+                        id = id.substring(0, id.length());
+                        colNo--;
+                        continue;
+                    }
             }
-            if(colNo < temp.length() - 1) {
-                ch = temp.charAt(colNo++);
-            }
+            ch = nowLine.charAt(colNo++);
         }
-        return ID_TOKEN;
+        return id;
     }
 
     /**
      * 识别数
      *
-     * @param temp
+     * @param ch
      * @return
      */
-    private int recogdig(String temp) {
+    private int recogdig(char ch) {
         int state = 0;
-        int colNo = 0;
-        char ch = temp.charAt(colNo);
         while (state != 7) {
             switch (state) {
-                case 0:
-                    if (isdigit(ch)) state = 1;
-                    else return ERROR_CODE;
-                    break;
-                case 1:
-                    if (isdigit(ch) && colNo < temp.length()-1) state = 1;
-                    else if (ch == '.') state = 2;
-                    else {
-                        return INT_CODE;
+                case 0://初始状态
+                    if (isdigit(ch)) {
+                        state = 1;
                     }
-                    break;
-                case 2:
-                    if (isdigit(ch)) state = 3;
-                    else return ERROR_CODE;
-                    break;
-                case 3:
-                    if (isdigit(ch)) state = 3;
-                    else if ((ch == 'E') || (ch == 'e')) state = 4;
                     else {
-                        return NUMBER_CODE;//实数类型
-                    }
-                    break;
-                case 4:
-                    if (isdigit(ch)) state = 6;
-                    else if (issign(ch)) state = 5;//读入+、-
-                    else return ERROR_CODE;
-                    break;
-                case 5:
-                    if(isdigit(ch)) state = 6;
-                    else {
-                        state = 7;
                         return ERROR_CODE;
                     }
                     break;
-                case 6:
+                case 1://读取到的是数字
+                    if (isdigit(ch)) {
+                        state = 1;
+                    }
+                    else if (ch == '.') {
+                        state = 2;
+                    }
+                    else if (ch == 'e' || ch=='E') {
+                        state = 4;
+                    }
+                    else {
+                        colNo--;
+                        return INT_CODE;
+                    }
+                    break;
+                case 2://读取到小数点
+                    if (isdigit(ch)) {
+                        state = 3;
+                    }
+                    else {
+                        return ERROR_CODE;
+                    }
+                    break;
+                case 3://读取到的是数字
+                    if (isdigit(ch)) {
+                        state = 3;
+                    }
+                    else if ((ch == 'E') || (ch == 'e')) {
+                        state = 4;
+                    }
+                    else {
+                        colNo--;
+                        return NUMBER_CODE;//实数类型
+                    }
+                    break;
+                case 4://读取到的是科学计数法:e、E
+                    if (isdigit(ch)) {
+                        state = 6;
+                    }
+                    else if (issign(ch)) {
+                        state = 5;//读入+、-
+                    }
+                    else {
+                        return ERROR_CODE;
+                    }
+                    break;
+                case 5://读取到的是自加、自减
+                    if(isdigit(ch)) {
+                        state = 6;
+                    }
+                    else {
+                        return ERROR_CODE;
+                    }
+                    break;
+                case 6://读取到的是数字
                     if(isdigit(ch)) state = 6;
                     else {
+                        colNo--;
                         state = 7;
                         return NUMBER_CODE;
                     }
             }
-            if(colNo < temp.length() - 1) {
-                ch = temp.charAt(colNo++);
-            }
+            ch = nowLine.charAt(colNo++);
         }
-        return NUMBER_TOKEN;//返回数的token
+        return ERROR_CODE;
     }
 
     private boolean issign(char ch) {
@@ -358,59 +482,55 @@ public class CompilingServlet extends HttpServlet {
 
     /**
      * 识别字符常数
-     * @param temp
+     * @param ch
      * @return
      */
-    private int recogstr(String temp) {
+    private int recogstr(char ch) {
         int state = 0;
-        int colNo = 0;
-        char ch = temp.charAt(colNo);
         while(state != 2) {
             switch (state) {
                 case 0 :
                     state = 1;
                     break;
                 case 1 :
-                    if(ch == '\'' || ch == '\"') state = 2;
-                    else state = 1;
+                    if(ch == '\'' || ch == '\"') {
+                        return colNo;
+                    }
+                    else {
+                        state = 1;
+                    }
             }
-            if(colNo < temp.length() - 1) {
-                ch = temp.charAt(colNo++);
-            }
+            ch = nowLine.charAt(colNo++);
         }
-        return CHAR_TOKEN;
+        return ERROR_CODE;
     }
 
     /**
      * 识别并去掉注释
-     * @param temp
+     * @param ch
      * @return
      */
-    private int handlecom(String temp) {
+    private int handlecom(char ch) {
         int state = 0;
-        int colNo = 0;
-        char ch = temp.charAt(colNo++);
-        if(temp.length() <= 1) {
-            return EXCEPT_TOKEN;
-        }
-        else {
-            char ch1 = temp.charAt(colNo);
-            if(ch=='*') {
-                do {
-                    ch1 = temp.charAt(colNo++);
-                }while ((ch1 != '*') && colNo<temp.length());
-                if(ch1 != '\n') {
-                    ch1 = temp.charAt(colNo);
-                    if(ch1 == '/') {
-                        return COM_TOKEN;//返回注释的token
-                    }
+        char newch = nowLine.charAt(colNo++);
+        if(newch=='*') {
+            do {
+                newch = nowLine.charAt(colNo++);
+            } while ((newch != '*') && colNo < nowLine.length());
+            if (newch != '\n') {
+                newch = nowLine.charAt(colNo++);
+                if (newch == '/') {
+                    return COM_TOKEN;//返回注释的token
                 }
-                else {
-                    return COM_TOKEN;
-                }
+            } else {
+                return COM_TOKEN;
             }
         }
-        return EXCEPT_TOKEN;
+        else if (newch == '/') {
+            colNo = nowLine.length();
+            return COM_TOKEN;
+        }
+        return EXCEPT_TOKEN;//返回除号
     }
 
     /**
@@ -429,45 +549,30 @@ public class CompilingServlet extends HttpServlet {
     }
 
     /**
-     * 对参数进行分类
+     * 对第一个字符进行分类
      * @param ch
      * @return
      */
     public int sort(char ch) {
-        /**
-         * 数字
-         */
-        if(isdigit(ch)) {
+        if(isdigit(ch)) {//数字
             return CONSTANT;
         }
-        /**
-         * 字母
-         */
-        else if(isalpha(ch)) {
+        else if(isalpha(ch)) {//字母
             return IDENTIFIER;
         }
-        /**
-         * 注释
-         */
-        else if(ch=='/') {
+        else if(ch=='/') {//注释
             return NOTE;
         }
-        /**
-         * 字符
-         */
-        else if(ch=='\'' || ch == '\"') {
+        else if(ch=='\'' || ch == '\"') {//字符
             return CHAR;
         }
-        /**
-         * 界符
-         */
-        else if(isdelimeter(""+ch)!=0) {
+        else if(isdelimeter(""+ch)!=0) {//界符
             return DELIMITER;
         }
-        /**
-         * 未识别
-         */
-        else {
+        else if(isCalculate("" + ch)!=0) {//运算符
+            return CALCULATE;
+        }
+        else {//未识别
             return UNKNOW;
         }
     }
@@ -484,6 +589,11 @@ public class CompilingServlet extends HttpServlet {
                 return Integer.parseInt(wordListBean.getToken());//返回界符
             }
         }
+
+        return 0;
+    }
+
+    private int isCalculate(String temp) {
         List<WordListBean> wordListBeans1 = entryMap.get("calculate");
         for(WordListBean wordListBean : wordListBeans1) {
             if(wordListBean.getWord().equals(temp)) {
